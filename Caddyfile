@@ -1,0 +1,3 @@
+myonair.freeddns.org {
+	reverse_proxy localhost:3000
+}
