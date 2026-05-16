@@ -8,6 +8,7 @@ set -e
 
 AWS_REGION="ap-northeast-2"
 APP_NAME="my-onair"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text 2>/dev/null) || {
   echo "❌ AWS CLI 인증 실패. 'aws configure'를 먼저 실행하세요."; exit 1
 }
@@ -22,6 +23,44 @@ echo "========================================="
 echo "  배포: ${APP_NAME} → ${AWS_REGION}"
 echo "  계정: ${ACCOUNT_ID}"
 echo "========================================="
+
+# ── 0. 인프라 부트스트랩 (없으면 자동 생성) ──
+echo ""
+echo "▶ [0/4] 인프라 상태 확인..."
+
+CLUSTER_STATUS=$(aws ecs describe-clusters \
+  --clusters "${APP_NAME}" \
+  --region "${AWS_REGION}" \
+  --query "clusters[0].status" --output text 2>/dev/null || echo "NONE")
+
+ECR_EXISTS=$(aws ecr describe-repositories \
+  --repository-names "${APP_NAME}" \
+  --region "${AWS_REGION}" \
+  --query "repositories[0].repositoryName" --output text 2>/dev/null || echo "NONE")
+
+ROLE_EXISTS=$(aws iam get-role \
+  --role-name "ecsTaskExecutionRole" \
+  --query "Role.RoleName" --output text 2>/dev/null || echo "NONE")
+
+if [ "${CLUSTER_STATUS}" != "ACTIVE" ] || [ "${ECR_EXISTS}" = "NONE" ] || [ "${ROLE_EXISTS}" = "NONE" ]; then
+  echo "  ⚠ 인프라가 누락되어 있습니다. setup-aws.sh 를 먼저 실행합니다."
+  echo "    - 클러스터: ${CLUSTER_STATUS}"
+  echo "    - ECR:      ${ECR_EXISTS}"
+  echo "    - IAM Role: ${ROLE_EXISTS}"
+  echo ""
+  if [ ! -x "${SCRIPT_DIR}/setup-aws.sh" ]; then
+    echo "❌ ${SCRIPT_DIR}/setup-aws.sh 를 실행할 수 없습니다 (파일 없음/실행권한 없음)."
+    exit 1
+  fi
+  "${SCRIPT_DIR}/setup-aws.sh" || {
+    echo "❌ 인프라 부트스트랩 실패. 위 오류를 확인하세요."
+    exit 1
+  }
+  echo ""
+  echo "  ✓ 인프라 부트스트랩 완료. 배포를 계속 진행합니다."
+else
+  echo "  ✓ 인프라 정상 (클러스터/ECR/IAM Role 확인됨)"
+fi
 
 # ── 1. ECR 로그인 ──
 echo ""
