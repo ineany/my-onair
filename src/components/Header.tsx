@@ -36,6 +36,16 @@ export default function Header() {
           <button className="flex h-9 w-9 items-center justify-center rounded-lg text-white/60 transition-all hover:bg-white/10 hover:text-white md:hidden">
             <i className="ri-search-line text-lg" />
           </button>
+          {process.env.NEXT_PUBLIC_ENABLE_LOCAL_ADMIN === "true" && (
+            <Link
+              href="/admin"
+              className="glass-card hidden items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-purple-200/90 transition-all hover:text-white sm:flex"
+              title="로컬 전용 백업 관리"
+            >
+              <i className="ri-shield-keyhole-line" />
+              관리
+            </Link>
+          )}
           <button className="glass-card hidden items-center gap-2 rounded-xl px-5 py-2 text-sm font-medium text-white/80 transition-all hover:text-white sm:flex">
             <i className="ri-user-line" />
             로그인
@@ -53,6 +63,15 @@ export default function Header() {
       {menuOpen && (
         <div className="border-t border-white/5 px-4 pb-4 md:hidden">
           <div className="mt-3 flex flex-col gap-1">
+            {process.env.NEXT_PUBLIC_ENABLE_LOCAL_ADMIN === "true" && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-purple-200/90 hover:bg-white/5"
+              >
+                <i className="ri-shield-keyhole-line" />
+                관리
+              </Link>
+            )}
             <button className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-white/5">
               <i className="ri-user-line" />
               로그인
